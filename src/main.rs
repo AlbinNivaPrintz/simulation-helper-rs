@@ -1,5 +1,5 @@
 use rand::Rng;
-use simulator::SerialSimulationEngine;
+use simulator::{SerialSimulationEngine, SimulationEngine};
 
 fn main() {
     let eng = SerialSimulationEngine::new(10, || {
