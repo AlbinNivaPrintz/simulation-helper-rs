@@ -32,17 +32,20 @@ impl<T, F: Fn() -> T> SerialSimulationEngine<T, F> {
             pb: None,
         }
     }
+
+    fn _run(&self, i: impl Iterator<Item = usize>) -> Vec<T> {
+        i.map(|_| (self.simulation)()).collect()
+    }
 }
 
 impl<T, F: Fn() -> T> SimulationEngine<T> for SerialSimulationEngine<T, F> {
     fn run(&mut self) -> Vec<T> {
         let iter = 0..self.n;
+
         if let Some(pb) = self.pb.take() {
-            iter.progress_with(pb)
-                .map(|_| (self.simulation)())
-                .collect()
+            self._run(iter.progress_with(pb))
         } else {
-            iter.map(|_| (self.simulation)()).collect()
+            self._run(iter)
         }
     }
 
@@ -77,6 +80,10 @@ impl<T: std::marker::Send, F: Fn() -> T + std::marker::Sync> ParSimulationEngine
             pb: None,
         }
     }
+
+    fn _run(&self, i: impl ParallelIterator<Item = usize>) -> Vec<T> {
+        i.map(|_| (self.simulation)()).collect()
+    }
 }
 
 impl<T: std::marker::Send, F: Fn() -> T + std::marker::Sync> SimulationEngine<T>
@@ -85,11 +92,9 @@ impl<T: std::marker::Send, F: Fn() -> T + std::marker::Sync> SimulationEngine<T>
     fn run(&mut self) -> Vec<T> {
         let iter = (0..self.n).into_par_iter();
         if let Some(pb) = self.pb.take() {
-            iter.progress_with(pb)
-                .map(|_| (self.simulation)())
-                .collect()
+            self._run(iter.progress_with(pb))
         } else {
-            iter.map(|_| (self.simulation)()).collect()
+            self._run(iter)
         }
     }
 
